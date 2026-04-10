@@ -125,42 +125,37 @@
     </div>
 
     <script>
-        // Global state: The base geometric points for an 'F' shape
-        // Shared across all sketch instances
         const baseShape = [
-            {x: -20, y: -40}, // Bottom left of stem
-            {x: -20, y: 40},  // Top left of stem
-            {x: 30, y: 40},   // Top right of top bar
-            {x: 30, y: 20},   // Bottom right of top bar
-            {x: 0, y: 20},    // Inner corner top
-            {x: 0, y: 0},     // Inner corner middle-top
-            {x: 20, y: 0},    // Right of middle bar
-            {x: 20, y: -20},  // Bottom of middle bar
-            {x: 0, y: -20},   // Inner corner middle-bottom
-            {x: 0, y: -40}    // Bottom right of stem
+            {x: -20, y: -40},
+            {x: -20, y: 40},
+            {x: 30, y: 40},
+            {x: 30, y: 20},
+            {x: 0, y: 20},
+            {x: 0, y: 0},
+            {x: 20, y: 0},
+            {x: 20, y: -20},
+            {x: 0, y: -20},
+            {x: 0, y: -40}
         ];
 
         const CANVAS_SIZE = 280;
 
-        // Utility function used by all sketches to draw the Cartesian coordinate system
         function drawGridAndAxes(p) {
             p.push();
-            // Grid lines
             p.stroke(235);
             p.strokeWeight(1);
             for (let i = -p.width / 2; i < p.width / 2; i += 20) {
                 p.line(i, -p.height / 2, i, p.height / 2);
                 p.line(-p.width / 2, i, p.width / 2, i);
             }
-            // Major Axes
+
             p.stroke(150);
             p.strokeWeight(2);
-            p.line(0, -p.height / 2, 0, p.height / 2); // Y-axis
-            p.line(-p.width / 2, 0, p.width / 2, 0); // X-axis
+            p.line(0, -p.height / 2, 0, p.height / 2);
+            p.line(-p.width / 2, 0, p.width / 2, 0);
             p.pop();
         }
 
-        // Utility to draw the ghost (original un-transformed shape)
         function drawGhostShape(p) {
             p.push();
             p.fill(200, 200, 200, 100);
@@ -172,7 +167,6 @@
             p.pop();
         }
 
-        // --- (a) Identity Sketch ---
         new p5((p) => {
             let draggedPoint = null;
 
@@ -184,13 +178,11 @@
             p.draw = () => {
                 p.background(255);
                 
-                // Set origin to center, and Y-axis pointing UP (standard Cartesian)
                 p.translate(p.width / 2, p.height / 2);
                 p.scale(1, -1); 
 
                 drawGridAndAxes(p);
 
-                // Draw Base Shape
                 p.fill(100, 150, 255, 150);
                 p.stroke(50, 100, 255);
                 p.strokeWeight(2);
@@ -198,8 +190,7 @@
                 baseShape.forEach(pt => p.vertex(pt.x, pt.y));
                 p.endShape(p.CLOSE);
 
-                // Draw Interactive Handles
-                p.fill(239, 68, 68); // Red handles
+                p.fill(239, 68, 68);
                 p.stroke(255);
                 p.strokeWeight(1);
                 baseShape.forEach(pt => {
@@ -208,13 +199,10 @@
             };
 
             p.mousePressed = () => {
-                // Ensure click is inside this specific canvas
                 if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-                    // Convert mouse coordinates to world coordinates (centered, Y-up)
                     let mx = p.mouseX - p.width / 2;
                     let my = -(p.mouseY - p.height / 2);
 
-                    // Find if a point is clicked
                     for (let pt of baseShape) {
                         if (p.dist(mx, my, pt.x, pt.y) < 12) {
                             draggedPoint = pt;
@@ -236,7 +224,6 @@
             };
         });
 
-        // --- (b) Translation Sketch ---
         new p5((p) => {
             let txSlider = document.getElementById('tx-slider');
             let tySlider = document.getElementById('ty-slider');
@@ -261,19 +248,20 @@
                 txVal.innerText = tx;
                 tyVal.innerText = ty;
 
-                // Draw Transformed Shape
-                p.fill(34, 197, 94, 150); // Green
+                p.fill(34, 197, 94, 150);
                 p.stroke(21, 128, 61);
                 p.strokeWeight(2);
                 p.beginShape();
                 baseShape.forEach(pt => {
-                    p.vertex(pt.x, pt.y);
+                    // Translation: x' = x + Tx, y' = y + Ty
+                    const xPrime = pt.x + tx;
+                    const yPrime = pt.y + ty;
+                    p.vertex(xPrime, yPrime);
                 });
                 p.endShape(p.CLOSE);
             };
         });
 
-        // --- (c) Rotation Sketch ---
         new p5((p) => {
             let thSlider = document.getElementById('th-slider');
             let thVal = document.getElementById('th-val');
@@ -297,19 +285,20 @@
                 let cosT = Math.cos(rad);
                 let sinT = Math.sin(rad);
 
-                // Draw Transformed Shape
-                p.fill(168, 85, 247, 150); // Purple
+                p.fill(168, 85, 247, 150);
                 p.stroke(126, 34, 206);
                 p.strokeWeight(2);
                 p.beginShape();
                 baseShape.forEach(pt => {
-                    p.vertex(pt.x, pt.y);
+                    // Rotation about origin
+                    const xPrime = pt.x * cosT - pt.y * sinT;
+                    const yPrime = pt.x * sinT + pt.y * cosT;
+                    p.vertex(xPrime, yPrime);
                 });
                 p.endShape(p.CLOSE);
             };
         });
 
-        // --- (d) Scaling Sketch ---
         new p5((p) => {
             let sxSlider = document.getElementById('sx-slider');
             let sySlider = document.getElementById('sy-slider');
@@ -334,19 +323,20 @@
                 sxVal.innerText = sx;
                 syVal.innerText = sy;
 
-                // Draw Transformed Shape
-                p.fill(234, 179, 8, 150); // Yellow
+                p.fill(234, 179, 8, 150);
                 p.stroke(161, 98, 7);
                 p.strokeWeight(2);
                 p.beginShape();
                 baseShape.forEach(pt => {
-                    p.vertex(pt.x, pt.y);
+                    // Scaling: x' = x*Sx, y' = y*Sy
+                    const xPrime = pt.x * sx;
+                    const yPrime = pt.y * sy;
+                    p.vertex(xPrime, yPrime);
                 });
                 p.endShape(p.CLOSE);
             };
         });
 
-        // --- (e) Shearing Sketch ---
         new p5((p) => {
             let shxSlider = document.getElementById('shx-slider');
             let shySlider = document.getElementById('shy-slider');
@@ -371,20 +361,20 @@
                 shxVal.innerText = shx;
                 shyVal.innerText = shy;
 
-                // Draw Transformed Shape
-                p.fill(236, 72, 153, 150); // Pink
+                p.fill(236, 72, 153, 150);
                 p.stroke(190, 24, 93);
                 p.strokeWeight(2);
                 p.beginShape();
                 baseShape.forEach(pt => {
-                    // Math: x' = x + y*shx, y' = y + x*shy
-                    p.vertex(pt.x, pt.y);
+                    // Shearing: x' = x + y*shx, y' = y + x*shy
+                    const xPrime = pt.x + pt.y * shx;
+                    const yPrime = pt.y + pt.x * shy;
+                    p.vertex(xPrime, yPrime);
                 });
                 p.endShape(p.CLOSE);
             };
         });
 
-        // --- (f) Reflection Sketch ---
         new p5((p) => {
             let refxCheck = document.getElementById('refx-check');
             let refyCheck = document.getElementById('refy-check');
@@ -405,13 +395,15 @@
                 let refX = refxCheck.checked;
                 let refY = refyCheck.checked;
 
-                // Draw Transformed Shape
-                p.fill(14, 165, 233, 150); // Cyan
+                p.fill(14, 165, 233, 150);
                 p.stroke(3, 105, 161);
                 p.strokeWeight(2);
                 p.beginShape();
                 baseShape.forEach(pt => {
-                    p.vertex(pt.x, pt.y);
+                    // Reflection: X-axis flips y, Y-axis flips x
+                    const xPrime = refY ? -pt.x : pt.x;
+                    const yPrime = refX ? -pt.y : pt.y;
+                    p.vertex(xPrime, yPrime);
                 });
                 p.endShape(p.CLOSE);
             };
